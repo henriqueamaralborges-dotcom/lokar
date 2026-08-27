@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Painel Admin - Lokar Audiovisual</title>
+  
+  <!-- Fontes -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+            display: ['"Outfit"', 'sans-serif'],
+          },
+          colors: {
+            lokar: {
+              bg: '#0B0F17',
+              card: '#141A26',
+              border: '#ffffff1a',
+              gold: '#F59E0B'
+            }
+          }
+        }
+      }
+    }
+  </script>
+  
+  <!-- Custom CSS para Admin -->
+  <style>
+    body { background-color: #0B0F17; color: #fff; }
+    .glass-panel {
+      background: rgba(20, 26, 38, 0.7);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 8px; height: 8px; }
+    ::-webkit-scrollbar-track { background: #0B0F17; }
+    ::-webkit-scrollbar-thumb { background: #374151; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #4B5563; }
+    
+    .tab-content { display: none; }
+    .tab-content.active { display: block; animation: fadeIn 0.3s ease; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+  </style>
+</head>
+<body class="antialiased h-screen flex overflow-hidden">
+
+  <!-- Sidebar -->
+  <aside class="w-64 glass-panel border-r border-lokar-border flex flex-col hidden md:flex">
+    <div class="p-6 border-b border-lokar-border">
+      <h1 class="font-display text-2xl font-black tracking-tight text-white flex items-center gap-2">
+        <span class="text-lokar-gold">LOKAR</span> ADMIN
+      </h1>
+      <p class="text-xs text-gray-400 mt-1">Gestão de Catálogo e Clientes</p>
+    </div>
+    
+    <nav class="flex-1 p-4 space-y-2">
+      <button onclick="switchTab('dashboard')" id="btn-dashboard" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-colors bg-lokar-gold/10 text-lokar-gold">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>
+        Painel Geral
+      </button>
+      
+      <button onclick="switchTab('equipments')" id="btn-equipments" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold text-gray-400 hover:bg-white/5 hover:text-white transition-colors">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+        Gerenciar Equipamentos
+      </button>
+      
+      <button onclick="switchTab('customers')" id="btn-customers" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold text-gray-400 hover:bg-white/5 hover:text-white transition-colors">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+        Clientes Cadastrados
+      </button>
+    </nav>
+    
+    <div class="p-4 border-t border-lokar-border">
+      <a href="index.html" class="w-full flex justify-center items-center gap-2 px-4 py-3 rounded-xl text-sm font-bold bg-white/5 hover:bg-white/10 text-white transition-colors border border-white/10">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+        Ver Loja
+      </a>
+    </div>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="flex-1 flex flex-col h-screen overflow-hidden bg-[url('https://images.unsplash.com/photo-1598488035139-bdbb2231ce04?q=80&w=2000&auto=format&fit=crop')] bg-cover bg-center bg-no-repeat relative">
+    <!-- Overlay Escuro para Legibilidade -->
+    <div class="absolute inset-0 bg-[#0B0F17]/90 backdrop-blur-sm z-0"></div>
+    
+    <div class="relative z-10 flex-1 overflow-y-auto p-4 md:p-8">
+      
+      <!-- TAB: DASHBOARD -->
+      <div id="tab-dashboard" class="tab-content active space-y-6">
+        <header class="mb-8">
+          <h2 class="text-3xl font-display font-bold text-white">Painel Geral</h2>
+          <p class="text-gray-400 mt-1">Visão geral da sua locadora de equipamentos.</p>
+        </header>
+        
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div class="glass-panel p-6 rounded-2xl">
+            <div class="flex items-center gap-4">
+              <div class="p-3 bg-blue-500/20 text-blue-400 rounded-xl">
+                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+              </div>
+              <div>
+                <p class="text-sm text-gray-400 font-medium">Equipamentos Cadastrados</p>
+                <p class="text-3xl font-bold text-white mt-1" id="stat-equipments">0</p>
+              </div>
+            </div>
+          </div>
+          
+          <div class="glass-panel p-6 rounded-2xl">
+            <div class="flex items-center gap-4">
+              <div class="p-3 bg-purple-500/20 text-purple-400 rounded-xl">
+                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+              </div>
+              <div>
+                <p class="text-sm text-gray-400 font-medium">Clientes Aprovados</p>
+                <p class="text-3xl font-bold text-white mt-1" id="stat-customers">0</p>
+              </div>
+            </div>
+          </div>
+          
+          <div class="glass-panel p-6 rounded-2xl">
+            <div class="flex items-center gap-4">
+              <div class="p-3 bg-emerald-500/20 text-emerald-400 rounded-xl">
+                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+              </div>
+              <div>
+                <p class="text-sm text-gray-400 font-medium">Valor Total em Estoque (Diárias)</p>
+                <p class="text-3xl font-bold text-white mt-1" id="stat-value">R$ 0,00</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- TAB: GERENCIAR EQUIPAMENTOS -->
+      <div id="tab-equipments" class="tab-content">
+        <header class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
+          <div>
+            <h2 class="text-3xl font-display font-bold text-white">Catálogo de Equipamentos</h2>
+            <p class="text-gray-400 mt-1">Adicione, edite ou remova produtos da loja virtual.</p>
+          </div>
+          <button onclick="openEquipmentModal()" class="px-5 py-2.5 rounded-xl bg-lokar-gold text-black font-extrabold text-sm flex items-center gap-2 hover:bg-amber-400 transition-colors shadow-lg shadow-amber-500/20">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
+            Adicionar Novo Equipamento
+          </button>
+        </header>
+
+        <div class="glass-panel rounded-2xl overflow-hidden">
+          <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+              <thead>
+                <tr class="bg-white/5 border-b border-lokar-border text-xs uppercase tracking-wider text-gray-400 font-semibold">
+                  <th class="p-4">Imagem</th>
+                  <th class="p-4">Equipamento (Nome)</th>
+                  <th class="p-4">Categoria</th>
+                  <th class="p-4 text-center">Estoque</th>
+                  <th class="p-4 text-right">Preço Diária</th>
+                  <th class="p-4 text-center">Ações</th>
+                </tr>
+              </thead>
+              <tbody id="equipments-table-body" class="divide-y divide-lokar-border text-sm">
+                <!-- Injetado via JS -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      
+      <!-- TAB: CLIENTES -->
+      <div id="tab-customers" class="tab-content">
+        <header class="mb-8">
+          <h2 class="text-3xl font-display font-bold text-white">Clientes Cadastrados</h2>
+          <p class="text-gray-400 mt-1">Lista de usuários do sistema Lokar.</p>
+        </header>
+
+        <div class="glass-panel rounded-2xl overflow-hidden">
+          <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+              <thead>
+                <tr class="bg-white/5 border-b border-lokar-border text-xs uppercase tracking-wider text-gray-400 font-semibold">
+                  <th class="p-4">ID</th>
+                  <th class="p-4">Nome do Cliente</th>
+                  <th class="p-4">E-mail</th>
+                  <th class="p-4">Telefone / WhatsApp</th>
+                  <th class="p-4">Data Cadastro</th>
+                </tr>
+              </thead>
+              <tbody id="customers-table-body" class="divide-y divide-lokar-border text-sm">
+                <!-- Injetado via JS -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- MODAL DE EDIÇÃO / CRIAÇÃO DE EQUIPAMENTO -->
+  <div id="equipment-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4">
+    <div class="absolute inset-0 bg-black/80 backdrop-blur-sm" onclick="closeEquipmentModal()"></div>
+    <div class="relative w-full max-w-2xl bg-lokar-card border border-lokar-border rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+      <div class="p-6 border-b border-lokar-border flex justify-between items-center bg-white/5">
+        <h3 class="text-xl font-display font-bold text-white" id="modal-title">Novo Equipamento</h3>
+        <button onclick="closeEquipmentModal()" class="text-gray-400 hover:text-white transition-colors p-1 rounded-lg hover:bg-white/10">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+      
+      <div class="p-6 overflow-y-auto flex-1">
+        <form id="equipment-form" class="space-y-5">
+          <input type="hidden" id="form-id" />
+          
+          <div>
+            <label class="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Nome do Equipamento *</label>
+            <input type="text" id="form-title" required class="w-full bg-[#0B0F17] border border-lokar-border rounded-xl px-4 py-3 text-white focus:outline-none focus:border-lokar-gold focus:ring-1 focus:ring-lokar-gold transition-all" placeholder="Ex: Câmera Sony FX3">
+          </div>
+          
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <div>
+              <label class="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Categoria *</label>
+              <select id="form-category" required class="w-full bg-[#0B0F17] border border-lokar-border rounded-xl px-4 py-3 text-white focus:outline-none focus:border-lokar-gold focus:ring-1 focus:ring-lokar-gold transition-all appearance-none">
+                <option value="Câmeras">Câmeras</option>
+                <option value="Lentes">Lentes</option>
+                <option value="Áudio">Áudio</option>
+                <option value="Iluminação">Iluminação</option>
+                <option value="Estabilizadores">Estabilizadores e Drones</option>
+                <option value="Acessórios">Acessórios</option>
+              </select>
+            </div>
+            
+            <div>
+              <label class="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Preço Diária (R$) *</label>
+              <input type="number" id="form-price" step="0.01" min="0" required class="w-full bg-[#0B0F17] border border-lokar-border rounded-xl px-4 py-3 text-white focus:outline-none focus:border-lokar-gold focus:ring-1 focus:ring-lokar-gold transition-all" placeholder="0.00">
+            </div>
+          </div>
+          
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <div>
+              <label class="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Estoque *</label>
+              <input type="number" id="form-stock" min="0" required class="w-full bg-[#0B0F17] border border-lokar-border rounded-xl px-4 py-3 text-white focus:outline-none focus:border-lokar-gold focus:ring-1 focus:ring-lokar-gold transition-all" placeholder="Ex: 5">
+            </div>
+            
+            <div>
+              <label class="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Status</label>
+              <select id="form-status" class="w-full bg-[#0B0F17] border border-lokar-border rounded-xl px-4 py-3 text-white focus:outline-none focus:border-lokar-gold focus:ring-1 focus:ring-lokar-gold transition-all appearance-none">
+                <option value="Ativo">Ativo</option>
+                <option value="Inativo">Inativo</option>
+                <option value="Manutenção">Em Manutenção</option>
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">URL da Imagem (Unsplash ou externa) *</label>
+            <input type="url" id="form-image" required class="w-full bg-[#0B0F17] border border-lokar-border rounded-xl px-4 py-3 text-white focus:outline-none focus:border-lokar-gold focus:ring-1 focus:ring-lokar-gold transition-all" placeholder="https://images.unsplash.com/photo-...">
+            
+            <!-- Image Preview -->
+            <div class="mt-3 bg-black/40 border border-white/10 rounded-xl overflow-hidden h-40 relative flex items-center justify-center">
+              <span class="text-gray-600 text-sm absolute z-0">Preview da Imagem</span>
+              <img id="form-image-preview" src="" onerror="this.style.display='none'" onload="this.style.display='block'" class="w-full h-full object-cover relative z-10" style="display:none;" />
+            </div>
+          </div>
+        </form>
+      </div>
+      
+      <div class="p-6 border-t border-lokar-border bg-white/5 flex justify-end gap-3">
+        <button type="button" onclick="closeEquipmentModal()" class="px-5 py-2.5 rounded-xl border border-white/10 text-white font-semibold hover:bg-white/5 transition-colors">Cancelar</button>
+        <button type="button" onclick="saveEquipment()" class="px-6 py-2.5 rounded-xl bg-lokar-gold text-black font-extrabold shadow-lg shadow-amber-500/20 hover:bg-amber-400 transition-colors">Salvar Equipamento</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/admin.js"></script>
+</body>
+</html>

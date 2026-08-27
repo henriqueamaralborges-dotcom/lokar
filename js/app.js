@@ -30,7 +30,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 async function loadDatabase() {
   try {
-    let dbData = localStorage.getItem('lokar_equipamentos');
+    let dbData = localStorage.getItem('produtos_lokar');
 
     // Se não tiver localmente, faz fetch do arquivo JSON
     if (!dbData) {
@@ -40,7 +40,7 @@ async function loadDatabase() {
 
       const data = await response.json();
       // Salva array bruto original no localStorage
-      localStorage.setItem('lokar_equipamentos', JSON.stringify(data.equipamentos));
+      localStorage.setItem('produtos_lokar', JSON.stringify(data.equipamentos));
       dbData = JSON.stringify(data.equipamentos);
     }
 
