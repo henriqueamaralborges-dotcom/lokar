@@ -1,0 +1,184 @@
+{
+    "equipamentos": [
+        {
+            "ID": "CAM-001",
+            "Categoria": "Câmeras",
+            "Equipamento": "Câmera Sony FX30 Super 35 Cinema",
+            "Preço Diária (R$)": 559.0,
+            "Estoque": 3,
+            "Status": "Ativo",
+            "URL Imagem": "https://images.unsplash.com/photo-1516035069371-29a1b244cc32?auto=format&fit=crop&w=500&q=60"
+        },
+        {
+            "ID": "CAM-002",
+            "Categoria": "Câmeras",
+            "Equipamento": "Câmera Sony Alpha A7III Mirrorless 4K",
+            "Preço Diária (R$)": 419.0,
+            "Estoque": 5,
+            "Status": "Ativo",
+            "URL Imagem": "https://images.unsplash.com/photo-1617005082833-1eb58569a47c?auto=format&fit=crop&w=500&q=60"
+        },
+        {
+            "ID": "CAM-003",
+            "Categoria": "Câmeras",
+            "Equipamento": "Câmera Blackmagic Pocket Cinema 6K Pro",
+            "Preço Diária (R$)": 619.0,
+            "Estoque": 2,
+            "Status": "Ativo",
+            "URL Imagem": "https://images.unsplash.com/photo-1595822557451-d419349e54d6?auto=format&fit=crop&w=500&q=60"
+        },
+        {
+            "ID": "CAM-004",
+            "Categoria": "Câmeras",
+            "Equipamento": "Câmera DJI Osmo Pocket 3",
+            "Preço Diária (R$)": 229.0,
+            "Estoque": 4,
+            "Status": "Ativo",
+            "URL Imagem": "https://images.unsplash.com/photo-1621601620359-2475e7a9cfa4?auto=format&fit=crop&w=500&q=60"
+        },
+        {
+            "ID": "CAM-005",
+            "Categoria": "Câmeras",
+            "Equipamento": "Câmera Sony ZV-E10 com Lente 16-50mm OSS",
+            "Preço Diária (R$)": 299.0,
+            "Estoque": 3,
+            "Status": "Ativo",
+            "URL Imagem": "https://images.unsplash.com/photo-1616423640778-28d1b53229bd?auto=format&fit=crop&w=500&q=60"
+        },
+        {
+            "ID": "LEN-001",
+            "Categoria": "Lentes",
+            "Equipamento": "Lente Canon 24-70mm f/2.8L II USM",
+            "Preço Diária (R$)": 249.0,
+            "Estoque": 4,
+            "Status": "Ativo",
+            "URL Imagem": "https://images.unsplash.com/photo-1617726487625-f71e626e27ab?auto=format&fit=crop&w=500&q=60"
+        },
+        {
+            "ID": "LEN-002",
+            "Categoria": "Lentes",
+            "Equipamento": "Lente Canon 70-200mm f/2.8L IS II USM",
+            "Preço Diária (R$)": 279.0,
+            "Estoque": 3,
+            "Status": "Ativo",
+            "URL Imagem": "https://images.unsplash.com/photo-1517540263665-27a3c3c1cbcc?auto=format&fit=crop&w=500&q=60"
+        },
+        {
+            "ID": "LEN-003",
+            "Categoria": "Lentes",
+            "Equipamento": "Lente Sony FE 70-200mm f/2.8 I GM OSS",
+            "Preço Diária (R$)": 319.0,
+            "Estoque": 3,
+            "Status": "Ativo",
+            "URL Imagem": "https://images.unsplash.com/photo-1616423641405-b024467d1656?auto=format&fit=crop&w=500&q=60"
+        },
+        {
+            "ID": "LEN-004",
+            "Categoria": "Lentes",
+            "Equipamento": "Lente Sony FE 16-35mm f/2.8 GM",
+            "Preço Diária (R$)": 279.0,
+            "Estoque": 2,
+            "Status": "Ativo",
+            "URL Imagem": "https://images.unsplash.com/photo-1549444458-20228302f232?auto=format&fit=crop&w=500&q=60"
+        },
+        {
+            "ID": "AUD-001",
+            "Categoria": "Áudio",
+            "Equipamento": "Mesa de Áudio RØDECaster Pro Podcast",
+            "Preço Diária (R$)": 259.0,
+            "Estoque": 2,
+            "Status": "Ativo",
+            "URL Imagem": "https://images.unsplash.com/photo-1598488035139-bdbb2231ce04?auto=format&fit=crop&w=500&q=60"
+        },
+        {
+            "ID": "AUD-002",
+            "Categoria": "Áudio",
+            "Equipamento": "Lapela Sem Fio Hollyland Lark M2",
+            "Preço Diária (R$)": 159.0,
+            "Estoque": 6,
+            "Status": "Ativo",
+            "URL Imagem": "https://images.unsplash.com/photo-1590602847861-f357a9332bbc?auto=format&fit=crop&w=500&q=60"
+        },
+        {
+            "ID": "AUD-003",
+            "Categoria": "Áudio",
+            "Equipamento": "Microfone Boom NTG4+",
+            "Preço Diária (R$)": 249.0,
+            "Estoque": 3,
+            "Status": "Ativo",
+            "URL Imagem": "https://images.unsplash.com/photo-1518925567305-654dbdbb30cc?auto=format&fit=crop&w=500&q=60"
+        },
+        {
+            "ID": "AUD-004",
+            "Categoria": "Áudio",
+            "Equipamento": "Gravador de Áudio H4n Pro",
+            "Preço Diária (R$)": 159.0,
+            "Estoque": 4,
+            "Status": "Ativo",
+            "URL Imagem": "https://images.unsplash.com/photo-1626265774643-f1943311a86b?auto=format&fit=crop&w=500&q=60"
+        },
+        {
+            "ID": "ILU-001",
+            "Categoria": "Iluminação",
+            "Equipamento": "Aputure Amaran 200x S Bicolor LED",
+            "Preço Diária (R$)": 229.0,
+            "Estoque": 4,
+            "Status": "Ativo",
+            "URL Imagem": "https://images.unsplash.com/photo-1588636184518-e4b47ebfc514?auto=format&fit=crop&w=500&q=60"
+        },
+        {
+            "ID": "ILU-002",
+            "Categoria": "Iluminação",
+            "Equipamento": "LED Aputure Amaran COB 60x Bicolor",
+            "Preço Diária (R$)": 159.0,
+            "Estoque": 5,
+            "Status": "Ativo",
+            "URL Imagem": "https://images.unsplash.com/photo-1537241280802-1a4d1f2e1dd8?auto=format&fit=crop&w=500&q=60"
+        },
+        {
+            "ID": "ILU-003",
+            "Categoria": "Iluminação",
+            "Equipamento": "Air Tube Light Ulanzi 12W",
+            "Preço Diária (R$)": 69.0,
+            "Estoque": 8,
+            "Status": "Ativo",
+            "URL Imagem": "https://images.unsplash.com/photo-1601662528567-526cd06f6582?auto=format&fit=crop&w=500&q=60"
+        },
+        {
+            "ID": "ACE-001",
+            "Categoria": "Acessórios",
+            "Equipamento": "Máquina de Fumaça Portátil (Smoke B)",
+            "Preço Diária (R$)": 119.0,
+            "Estoque": 2,
+            "Status": "Ativo",
+            "URL Imagem": "https://images.unsplash.com/photo-1627918455829-1a06df538e1b?auto=format&fit=crop&w=500&q=60"
+        },
+        {
+            "ID": "ACE-002",
+            "Categoria": "Acessórios",
+            "Equipamento": "Tripé Miliboo MTT609A Cabeça Fluída",
+            "Preço Diária (R$)": 199.0,
+            "Estoque": 5,
+            "Status": "Ativo",
+            "URL Imagem": "https://images.unsplash.com/photo-1510255523992-3cda7992fc70?auto=format&fit=crop&w=500&q=60"
+        }
+    ],
+    "usuarios": [
+        {
+            "ID Cliente": "CLI-001",
+            "Nome": "João Silva",
+            "Email": "joao@email.com",
+            "Telefone": "(11) 98888-7777",
+            "Status": "Aprovado",
+            "Data Cadastro": "2023-08-15"
+        },
+        {
+            "ID Cliente": "CLI-002",
+            "Nome": "Maria Oliveira",
+            "Email": "maria@producao.com",
+            "Telefone": "(11) 97777-6666",
+            "Status": "Aprovado",
+            "Data Cadastro": "2023-09-02"
+        }
+    ]
+}

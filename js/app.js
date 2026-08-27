@@ -1,108 +1,178 @@
 /**
  * Lokar Audiovisual - Core Application Logic
- * Standard Vanilla JS Application with LocalStorage state management
+ * Standard Vanilla JS Application with LocalStorage state management and JSON DB fetch
  */
 
 // Global App State
 const state = {
-    cart: [], // [{ id, quantity }]
-    selectedCategory: 'todos',
-    searchQuery: '',
-    sortBy: 'featured',
-    rentalDays: 1, // Default 1 day
-    phoneNumber: '5511999999999' // WhatsApp contact number
+  cart: [], // [{ id, quantity }]
+  selectedCategory: 'todos',
+  searchQuery: '',
+  sortBy: 'featured',
+  rentalDays: 1, // Default 1 day
+  phoneNumber: '5511999999999', // WhatsApp contact number
+  produtos: [] // Loaded from DB
 };
 
 // Initialize App
-document.addEventListener('DOMContentLoaded', () => {
-    loadCartFromStorage();
-    renderCategoryTabs();
-    renderProducts();
-    updateCartUI();
-    setupEventListeners();
+document.addEventListener('DOMContentLoaded', async () => {
+  await loadDatabase();
+  loadCartFromStorage();
+  renderCategoryTabs();
+  renderProducts();
+  updateCartUI();
+  setupEventListeners();
 });
+
+/* ==========================================================================
+   DATABASE SEED & LOCAL STORAGE
+   ========================================================================== */
+
+async function loadDatabase() {
+  try {
+    let dbData = localStorage.getItem('lokar_equipamentos');
+
+    // Se não tiver localmente, faz fetch do arquivo JSON
+    if (!dbData) {
+      console.info("Carregando banco de dados pela primeira vez...");
+      const response = await fetch('./lokar_db.json');
+      if (!response.ok) throw new Error('Não foi possível ler o arquivo lokar_db.json');
+
+      const data = await response.json();
+      // Salva array bruto original no localStorage
+      localStorage.setItem('lokar_equipamentos', JSON.stringify(data.equipamentos));
+      dbData = JSON.stringify(data.equipamentos);
+    }
+
+    const rawEquipamentos = JSON.parse(dbData);
+
+    // Transforma o schema do DB no schema usado na UI da aplicação
+    state.produtos = rawEquipamentos.map(item => {
+      // Normaliza as strings da categoria ("Câmeras" -> "cameras") 
+      // para combinar com os IDs definidos em CATEGORIES no products.js
+      let catId = "acessorios";
+      const catLabel = item.Categoria || "";
+      if (catLabel.includes("Câmeras")) catId = "cameras";
+      else if (catLabel.includes("Lentes")) catId = "lentes";
+      else if (catLabel.includes("Áudio")) catId = "audio";
+      else if (catLabel.includes("Iluminação")) catId = "iluminacao";
+      else if (catLabel.includes("Estabilizadores") || catLabel.includes("Drone")) catId = "estabilizadores";
+
+      return {
+        id: item.ID,
+        title: item.Equipamento,
+        category: catId,
+        categoryLabel: item.Categoria,
+        price: item["Preço Diária (R$)"],
+        rating: 4.9, // Mock default para produtos recém cadastrados
+        reviewsCount: Math.floor(Math.random() * 50) + 5, // Mock gerado
+        badge: item.Status === "Ativo" ? "Destaque" : "",
+        badgeColor: "amber",
+        image: item["URL Imagem"],
+        shortDesc: "Equipamento profissional de alta confiabilidade. Revisado, testado e pronto para locação, acompanhando itens de uso básico.",
+        description: "Seu kit será despachado em maletas rígidas no padrão cinema Pelican (quando aplicável). Equipamento submetido a rigoroso programa de manutenção preventiva da Lokar, assegurando durabilidade nas diárias do seu set de filmagem.",
+        specs: [
+          { label: "Categoria Padrão", value: item.Categoria },
+          { label: "Código Interno (SKU)", value: item.ID },
+          { label: "Unidades em Estoque", value: item.Estoque },
+          { label: "Status Geral do Item", value: item.Status }
+        ],
+        includedItems: [
+          `1x ${item.Equipamento} (Corpo/Unidade Principal)`,
+          "Kit de Acessórios Originais Padrão de Fábrica",
+          "Case/Bag de Proteção e Transporte",
+          "Lacre de Segurança Lokar Quality Assurance"
+        ]
+      };
+    });
+  } catch (error) {
+    console.error("Falha ao carregar banco de dados JSON:", error);
+    showToast("Erro ao conectar base de produtos. Verifique sua rede.", "error");
+    state.produtos = [];
+  }
+}
 
 /* ==========================================================================
    LOCALSTORAGE CART MANAGEMENT
    ========================================================================== */
 
 function loadCartFromStorage() {
-    try {
-        const savedCart = localStorage.getItem('lokar_cart_v1');
-        const savedDays = localStorage.getItem('lokar_rental_days');
-        if (savedCart) {
-            state.cart = JSON.parse(savedCart);
-        }
-        if (savedDays) {
-            state.rentalDays = parseInt(savedDays, 10) || 1;
-        }
-    } catch (e) {
-        console.error('Erro ao carregar carrinho do LocalStorage:', e);
-        state.cart = [];
+  try {
+    const savedCart = localStorage.getItem('lokar_cart_v1');
+    const savedDays = localStorage.getItem('lokar_rental_days');
+    if (savedCart) {
+      state.cart = JSON.parse(savedCart);
     }
+    if (savedDays) {
+      state.rentalDays = parseInt(savedDays, 10) || 1;
+    }
+  } catch (e) {
+    console.error('Erro ao carregar carrinho do LocalStorage:', e);
+    state.cart = [];
+  }
 }
 
 function saveCartToStorage() {
-    try {
-        localStorage.setItem('lokar_cart_v1', JSON.stringify(state.cart));
-        localStorage.setItem('lokar_rental_days', state.rentalDays.toString());
-    } catch (e) {
-        console.error('Erro ao salvar no LocalStorage:', e);
-    }
+  try {
+    localStorage.setItem('lokar_cart_v1', JSON.stringify(state.cart));
+    localStorage.setItem('lokar_rental_days', state.rentalDays.toString());
+  } catch (e) {
+    console.error('Erro ao salvar no LocalStorage:', e);
+  }
 }
 
 function addToCart(productId) {
-    const product = PRODUCTS.find(p => p.id === productId);
-    if (!product) return;
+  const product = state.produtos.find(p => p.id === productId);
+  if (!product) return;
 
-    const existingItem = state.cart.find(item => item.id === productId);
-    if (existingItem) {
-        existingItem.quantity += 1;
-    } else {
-        state.cart.push({ id: productId, quantity: 1 });
-    }
+  const existingItem = state.cart.find(item => item.id === productId);
+  if (existingItem) {
+    existingItem.quantity += 1;
+  } else {
+    state.cart.push({ id: productId, quantity: 1 });
+  }
 
-    saveCartToStorage();
-    updateCartUI();
-    animateCartBadge();
-    showToast(`"${product.title}" adicionado ao carrinho!`, 'success');
+  saveCartToStorage();
+  updateCartUI();
+  animateCartBadge();
+  showToast(`"${product.title}" adicionado ao carrinho!`, 'success');
 }
 
 function removeFromCart(productId) {
-    const product = PRODUCTS.find(p => p.id === productId);
-    state.cart = state.cart.filter(item => item.id !== productId);
-    saveCartToStorage();
-    updateCartUI();
-    if (product) {
-        showToast(`"${product.title}" removido do carrinho.`, 'info');
-    }
+  const product = state.produtos.find(p => p.id === productId);
+  state.cart = state.cart.filter(item => item.id !== productId);
+  saveCartToStorage();
+  updateCartUI();
+  if (product) {
+    showToast(`"${product.title}" removido do carrinho.`, 'info');
+  }
 }
 
 function updateQuantity(productId, delta) {
-    const item = state.cart.find(item => item.id === productId);
-    if (!item) return;
+  const item = state.cart.find(item => item.id === productId);
+  if (!item) return;
 
-    item.quantity += delta;
-    if (item.quantity <= 0) {
-        removeFromCart(productId);
-        return;
-    }
+  item.quantity += delta;
+  if (item.quantity <= 0) {
+    removeFromCart(productId);
+    return;
+  }
 
-    saveCartToStorage();
-    updateCartUI();
+  saveCartToStorage();
+  updateCartUI();
 }
 
 function setRentalDays(days) {
-    state.rentalDays = Math.max(1, parseInt(days, 10) || 1);
-    saveCartToStorage();
-    updateCartUI();
+  state.rentalDays = Math.max(1, parseInt(days, 10) || 1);
+  saveCartToStorage();
+  updateCartUI();
 }
 
 function clearCart() {
-    state.cart = [];
-    saveCartToStorage();
-    updateCartUI();
-    showToast('Carrinho limpo.', 'info');
+  state.cart = [];
+  saveCartToStorage();
+  updateCartUI();
+  showToast('Carrinho limpo.', 'info');
 }
 
 /* ==========================================================================
@@ -110,69 +180,77 @@ function clearCart() {
    ========================================================================== */
 
 function calculateCartTotals() {
-    let dailySubtotal = 0;
-    let itemCount = 0;
+  let dailySubtotal = 0;
+  let itemCount = 0;
 
-    state.cart.forEach(cartItem => {
-        const product = PRODUCTS.find(p => p.id === cartItem.id);
-        if (product) {
-            dailySubtotal += product.price * cartItem.quantity;
-            itemCount += cartItem.quantity;
-        }
-    });
+  state.cart.forEach(cartItem => {
+    const product = state.produtos.find(p => p.id === cartItem.id);
+    if (product) {
+      dailySubtotal += product.price * cartItem.quantity;
+      itemCount += cartItem.quantity;
+    }
+  });
 
-    // Calculate Discount based on rental days
-    const discountObj = RENTAL_PERIOD_DISCOUNTS.slice().reverse().find(d => state.rentalDays >= d.days) || { discount: 0, label: '' };
-    const discountRate = discountObj.discount;
+  // Calculate Discount based on rental days
+  const discountObj = RENTAL_PERIOD_DISCOUNTS.slice().reverse().find(d => state.rentalDays >= d.days) || { discount: 0, label: '' };
+  const discountRate = discountObj.discount;
 
-    const subtotalTotalDays = dailySubtotal * state.rentalDays;
-    const discountAmount = subtotalTotalDays * discountRate;
-    const grandTotal = subtotalTotalDays - discountAmount;
+  const subtotalTotalDays = dailySubtotal * state.rentalDays;
+  const discountAmount = subtotalTotalDays * discountRate;
+  const grandTotal = subtotalTotalDays - discountAmount;
 
-    return {
-        dailySubtotal,
-        itemCount,
-        discountRate,
-        discountAmount,
-        subtotalTotalDays,
-        grandTotal
-    };
+  return {
+    dailySubtotal,
+    itemCount,
+    discountRate,
+    discountAmount,
+    subtotalTotalDays,
+    grandTotal
+  };
 }
 
 function updateCartUI() {
-    const totals = calculateCartTotals();
+  const totals = calculateCartTotals();
 
-    // Update Badge Count
-    const badgeEl = document.getElementById('cart-badge');
-    if (badgeEl) {
-        badgeEl.textContent = totals.itemCount;
-        if (totals.itemCount > 0) {
-            badgeEl.classList.remove('hidden');
-        } else {
-            badgeEl.classList.add('hidden');
-        }
-    }
-
-    // Update Cart Drawer Items Container
-    const cartItemsContainer = document.getElementById('cart-drawer-items');
-    const cartEmptyState = document.getElementById('cart-empty-state');
-    const cartFooter = document.getElementById('cart-drawer-footer');
-
-    if (state.cart.length === 0) {
-        if (cartItemsContainer) cartItemsContainer.classList.add('hidden');
-        if (cartEmptyState) cartEmptyState.classList.remove('hidden');
-        if (cartFooter) cartFooter.classList.add('hidden');
+  // Update Badge Count
+  const badgeEl = document.getElementById('cart-badge');
+  if (badgeEl) {
+    badgeEl.textContent = totals.itemCount;
+    if (totals.itemCount > 0) {
+      badgeEl.classList.remove('hidden');
     } else {
-        if (cartItemsContainer) {
-            cartItemsContainer.classList.remove('hidden');
-            cartItemsContainer.innerHTML = state.cart.map(cartItem => {
-                const product = PRODUCTS.find(p => p.id === cartItem.id);
-                if (!product) return '';
-                const itemTotalDaily = product.price * cartItem.quantity;
+      badgeEl.classList.add('hidden');
+    }
+  }
 
-                return `
+  // Update Cart Drawer Items Container
+  const cartItemsContainer = document.getElementById('cart-drawer-items');
+  const cartEmptyState = document.getElementById('cart-empty-state');
+  const cartFooter = document.getElementById('cart-drawer-footer');
+
+  if (state.cart.length === 0) {
+    if (cartItemsContainer) cartItemsContainer.classList.add('hidden');
+    if (cartEmptyState) cartEmptyState.classList.remove('hidden');
+    if (cartFooter) cartFooter.classList.add('hidden');
+  } else {
+    if (cartItemsContainer) {
+      cartItemsContainer.classList.remove('hidden');
+      cartItemsContainer.innerHTML = state.cart.map(cartItem => {
+        const product = state.produtos.find(p => p.id === cartItem.id);
+        if (!product) return '';
+        const itemTotalDaily = product.price * cartItem.quantity;
+
+        // Fallback placeholder logic
+        const fallbackSrc = "https://via.placeholder.com/150x150?text=Sem+Imagem";
+
+        return `
           <div class="flex items-center gap-4 bg-[#141A26] p-3 rounded-xl border border-white/10 relative group">
-            <img src="${product.image}" alt="${product.title}" class="w-16 h-16 object-cover rounded-lg bg-black/40 flex-shrink-0" />
+            <img 
+              src="${product.image}" 
+              onerror="this.onerror=null;this.src='${fallbackSrc}';" 
+              alt="${product.title}" 
+              class="w-16 h-16 object-cover rounded-lg bg-black/40 flex-shrink-0" 
+            />
             <div class="flex-1 min-w-0">
               <h4 class="text-sm font-semibold text-white truncate">${product.title}</h4>
               <p class="text-xs text-amber-400 font-medium">R$ ${product.price.toFixed(2).replace('.', ',')} / dia</p>
@@ -190,47 +268,47 @@ function updateCartUI() {
             </button>
           </div>
         `;
-            }).join('');
-        }
-        if (cartEmptyState) cartEmptyState.classList.add('hidden');
-        if (cartFooter) cartFooter.classList.remove('hidden');
+      }).join('');
     }
+    if (cartEmptyState) cartEmptyState.classList.add('hidden');
+    if (cartFooter) cartFooter.classList.remove('hidden');
+  }
 
-    // Update Rental Days Selector Buttons
-    const daysSelect = document.getElementById('rental-days-select');
-    if (daysSelect) {
-        daysSelect.value = state.rentalDays;
+  // Update Rental Days Selector Buttons
+  const daysSelect = document.getElementById('rental-days-select');
+  if (daysSelect) {
+    daysSelect.value = state.rentalDays;
+  }
+
+  // Update Price Breakdown Display
+  const dailySubtotalEl = document.getElementById('cart-daily-subtotal');
+  const discountRowEl = document.getElementById('cart-discount-row');
+  const discountAmountEl = document.getElementById('cart-discount-amount');
+  const grandTotalEl = document.getElementById('cart-grand-total');
+
+  if (dailySubtotalEl) dailySubtotalEl.textContent = `R$ ${totals.dailySubtotal.toFixed(2).replace('.', ',')}`;
+
+  if (discountRowEl && discountAmountEl) {
+    if (totals.discountRate > 0) {
+      discountRowEl.classList.remove('hidden');
+      discountAmountEl.textContent = `- R$ ${totals.discountAmount.toFixed(2).replace('.', ',')} (${(totals.discountRate * 100)}% off)`;
+    } else {
+      discountRowEl.classList.add('hidden');
     }
+  }
 
-    // Update Price Breakdown Display
-    const dailySubtotalEl = document.getElementById('cart-daily-subtotal');
-    const discountRowEl = document.getElementById('cart-discount-row');
-    const discountAmountEl = document.getElementById('cart-discount-amount');
-    const grandTotalEl = document.getElementById('cart-grand-total');
-
-    if (dailySubtotalEl) dailySubtotalEl.textContent = `R$ ${totals.dailySubtotal.toFixed(2).replace('.', ',')}`;
-
-    if (discountRowEl && discountAmountEl) {
-        if (totals.discountRate > 0) {
-            discountRowEl.classList.remove('hidden');
-            discountAmountEl.textContent = `- R$ ${totals.discountAmount.toFixed(2).replace('.', ',')} (${(totals.discountRate * 100)}% off)`;
-        } else {
-            discountRowEl.classList.add('hidden');
-        }
-    }
-
-    if (grandTotalEl) {
-        grandTotalEl.textContent = `R$ ${totals.grandTotal.toFixed(2).replace('.', ',')}`;
-    }
+  if (grandTotalEl) {
+    grandTotalEl.textContent = `R$ ${totals.grandTotal.toFixed(2).replace('.', ',')}`;
+  }
 }
 
 function animateCartBadge() {
-    const badgeEl = document.getElementById('cart-badge');
-    if (badgeEl) {
-        badgeEl.classList.remove('badge-pulse');
-        void badgeEl.offsetWidth; // Trigger reflow
-        badgeEl.classList.add('badge-pulse');
-    }
+  const badgeEl = document.getElementById('cart-badge');
+  if (badgeEl) {
+    badgeEl.classList.remove('badge-pulse');
+    void badgeEl.offsetWidth; // Trigger reflow
+    badgeEl.classList.add('badge-pulse');
+  }
 }
 
 /* ==========================================================================
@@ -238,45 +316,45 @@ function animateCartBadge() {
    ========================================================================== */
 
 function generateWhatsAppQuote() {
-    if (state.cart.length === 0) {
-        showToast('Adicione equipamentos ao carrinho antes de solicitar orçamento.', 'error');
-        return;
+  if (state.cart.length === 0) {
+    showToast('Adicione equipamentos ao carrinho antes de solicitar orçamento.', 'error');
+    return;
+  }
+
+  const totals = calculateCartTotals();
+  const days = state.rentalDays;
+
+  let message = `🎬 *ORÇAMENTO DE LOCAÇÃO - LOKAR AUDIOVISUAL*\n`;
+  message += `==================================\n\n`;
+  message += `📅 *Duração da Locação:* ${days} ${days === 1 ? 'diária' : 'dias'}\n\n`;
+  message += `📦 *EQUIPAMENTOS SELECIONADOS:*\n`;
+
+  state.cart.forEach((cartItem, idx) => {
+    const product = state.produtos.find(p => p.id === cartItem.id);
+    if (product) {
+      const itemDaily = product.price * cartItem.quantity;
+      message += `${idx + 1}. *${cartItem.quantity}x ${product.title}*\n`;
+      message += `   • Diária un.: R$ ${product.price.toFixed(2).replace('.', ',')}\n`;
+      message += `   • Subtotal/dia: R$ ${itemDaily.toFixed(2).replace('.', ',')}\n\n`;
     }
+  });
 
-    const totals = calculateCartTotals();
-    const days = state.rentalDays;
+  message += `----------------------------------\n`;
+  message += `💵 *Soma das Diárias:* R$ ${totals.dailySubtotal.toFixed(2).replace('.', ',')} / dia\n`;
+  message += `🗓️ *Subtotal (${days} dias):* R$ ${totals.subtotalTotalDays.toFixed(2).replace('.', ',')}\n`;
 
-    let message = `🎬 *ORÇAMENTO DE LOCAÇÃO - LOKAR AUDIOVISUAL*\n`;
-    message += `==================================\n\n`;
-    message += `📅 *Duração da Locação:* ${days} ${days === 1 ? 'diária' : 'dias'}\n\n`;
-    message += `📦 *EQUIPAMENTOS SELECIONADOS:*\n`;
+  if (totals.discountRate > 0) {
+    message += `🏷️ *Desconto Especial (${totals.discountRate * 100}% off):* -R$ ${totals.discountAmount.toFixed(2).replace('.', ',')}\n`;
+  }
 
-    state.cart.forEach((cartItem, idx) => {
-        const product = PRODUCTS.find(p => p.id === cartItem.id);
-        if (product) {
-            const itemDaily = product.price * cartItem.quantity;
-            message += `${idx + 1}. *${cartItem.quantity}x ${product.title}*\n`;
-            message += `   • Diária un.: R$ ${product.price.toFixed(2).replace('.', ',')}\n`;
-            message += `   • Subtotal/dia: R$ ${itemDaily.toFixed(2).replace('.', ',')}\n\n`;
-        }
-    });
+  message += `💰 *VALOR TOTAL ESTIMADO:* *R$ ${totals.grandTotal.toFixed(2).replace('.', ',')}*\n`;
+  message += `==================================\n\n`;
+  message += `Olá equipe Lokar! Gostaria de verificar a disponibilidade dos itens acima para as minhas datas de produção.`;
 
-    message += `----------------------------------\n`;
-    message += `💵 *Soma das Diárias:* R$ ${totals.dailySubtotal.toFixed(2).replace('.', ',')} / dia\n`;
-    message += `🗓️ *Subtotal (${days} dias):* R$ ${totals.subtotalTotalDays.toFixed(2).replace('.', ',')}\n`;
+  const encodedMessage = encodeURIComponent(message);
+  const whatsappUrl = `https://wa.me/${state.phoneNumber}?text=${encodedMessage}`;
 
-    if (totals.discountRate > 0) {
-        message += `🏷️ *Desconto Especial (${totals.discountRate * 100}% off):* -R$ ${totals.discountAmount.toFixed(2).replace('.', ',')}\n`;
-    }
-
-    message += `💰 *VALOR TOTAL ESTIMADO:* *R$ ${totals.grandTotal.toFixed(2).replace('.', ',')}*\n`;
-    message += `==================================\n\n`;
-    message += `Olá equipe Lokar! Gostaria de verificar a disponibilidade dos itens acima para as minhas datas de produção.`;
-
-    const encodedMessage = encodeURIComponent(message);
-    const whatsappUrl = `https://wa.me/${state.phoneNumber}?text=${encodedMessage}`;
-
-    window.open(whatsappUrl, '_blank');
+  window.open(whatsappUrl, '_blank');
 }
 
 /* ==========================================================================
@@ -284,84 +362,89 @@ function generateWhatsAppQuote() {
    ========================================================================== */
 
 function renderCategoryTabs() {
-    const container = document.getElementById('category-tabs');
-    if (!container) return;
+  const container = document.getElementById('category-tabs');
+  if (!container) return;
 
-    container.innerHTML = CATEGORIES.map(cat => {
-        const isActive = state.selectedCategory === cat.id;
-        return `
+  container.innerHTML = CATEGORIES.map(cat => {
+    const isActive = state.selectedCategory === cat.id;
+    return `
       <button 
         onclick="setCategory('${cat.id}')"
         class="category-tab px-5 py-2.5 rounded-full text-sm font-semibold whitespace-nowrap transition-all duration-200 border border-white/10 ${isActive
-                ? 'active bg-amber-500 text-black shadow-lg shadow-amber-500/20'
-                : 'bg-[#141A26] text-gray-300 hover:bg-[#1A2333] hover:text-white'
-            }"
+        ? 'active bg-amber-500 text-black shadow-lg shadow-amber-500/20'
+        : 'bg-[#141A26] text-gray-300 hover:bg-[#1A2333] hover:text-white'
+      }"
       >
         ${cat.name}
       </button>
     `;
-    }).join('');
+  }).join('');
 }
 
 function setCategory(catId) {
-    state.selectedCategory = catId;
-    renderCategoryTabs();
-    renderProducts();
+  state.selectedCategory = catId;
+  renderCategoryTabs();
+  renderProducts();
 }
 
 function getFilteredProducts() {
-    let list = PRODUCTS.slice();
+  let list = state.produtos.slice();
 
-    // Filter Category
-    if (state.selectedCategory !== 'todos') {
-        list = list.filter(p => p.category === state.selectedCategory);
-    }
+  // Filter Category
+  if (state.selectedCategory !== 'todos') {
+    list = list.filter(p => p.category === state.selectedCategory);
+  }
 
-    // Filter Search Query
-    if (state.searchQuery.trim() !== '') {
-        const q = state.searchQuery.toLowerCase();
-        list = list.filter(p =>
-            p.title.toLowerCase().includes(q) ||
-            p.categoryLabel.toLowerCase().includes(q) ||
-            p.shortDesc.toLowerCase().includes(q) ||
-            p.description.toLowerCase().includes(q)
-        );
-    }
+  // Filter Search Query
+  if (state.searchQuery.trim() !== '') {
+    const q = state.searchQuery.toLowerCase();
+    list = list.filter(p =>
+      p.title.toLowerCase().includes(q) ||
+      p.categoryLabel.toLowerCase().includes(q) ||
+      p.shortDesc.toLowerCase().includes(q) ||
+      p.description.toLowerCase().includes(q) ||
+      p.id.toLowerCase().includes(q)
+    );
+  }
 
-    // Sort Filter
-    if (state.sortBy === 'price-low') {
-        list.sort((a, b) => a.price - b.price);
-    } else if (state.sortBy === 'price-high') {
-        list.sort((a, b) => b.price - a.price);
-    } else if (state.sortBy === 'rating') {
-        list.sort((a, b) => b.rating - a.rating);
-    }
+  // Sort Filter
+  if (state.sortBy === 'price-low') {
+    list.sort((a, b) => a.price - b.price);
+  } else if (state.sortBy === 'price-high') {
+    list.sort((a, b) => b.price - a.price);
+  } else if (state.sortBy === 'rating') {
+    list.sort((a, b) => b.rating - a.rating);
+  }
 
-    return list;
+  return list;
 }
 
 function renderProducts() {
-    const grid = document.getElementById('products-grid');
-    const emptyMessage = document.getElementById('no-products-message');
-    if (!grid) return;
+  const grid = document.getElementById('products-grid');
+  const emptyMessage = document.getElementById('no-products-message');
+  if (!grid) return;
 
-    const filtered = getFilteredProducts();
+  const filtered = getFilteredProducts();
 
-    if (filtered.length === 0) {
-        grid.innerHTML = '';
-        if (emptyMessage) emptyMessage.classList.remove('hidden');
-        return;
-    }
+  if (filtered.length === 0) {
+    grid.innerHTML = '';
+    if (emptyMessage) emptyMessage.classList.remove('hidden');
+    return;
+  }
 
-    if (emptyMessage) emptyMessage.classList.add('hidden');
+  if (emptyMessage) emptyMessage.classList.add('hidden');
 
-    grid.innerHTML = filtered.map(product => {
-        return `
+  // Fallback para caso imagem falhe ou suma do Unsplash
+  const fallbackSrc = "https://via.placeholder.com/500x300?text=Sem+Imagem";
+
+  grid.innerHTML = filtered.map(product => {
+    return `
       <div class="glass-card rounded-2xl overflow-hidden flex flex-col group">
         <!-- Image & Badge Container -->
         <div class="relative h-60 overflow-hidden bg-black/50 cursor-pointer" onclick="openProductModal('${product.id}')">
           <img 
             src="${product.image}" 
+            onerror="this.onerror=null;this.src='${fallbackSrc}';"
             alt="${product.title}" 
             loading="lazy"
             class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" 
@@ -426,7 +509,7 @@ function renderProducts() {
         </div>
       </div>
     `;
-    }).join('');
+  }).join('');
 }
 
 /* ==========================================================================
@@ -434,19 +517,26 @@ function renderProducts() {
    ========================================================================== */
 
 function openProductModal(productId) {
-    const product = PRODUCTS.find(p => p.id === productId);
-    if (!product) return;
+  const product = state.produtos.find(p => p.id === productId);
+  if (!product) return;
 
-    const modal = document.getElementById('product-modal');
-    const modalContent = document.getElementById('modal-content-container');
-    if (!modal || !modalContent) return;
+  const modal = document.getElementById('product-modal');
+  const modalContent = document.getElementById('modal-content-container');
+  if (!modal || !modalContent) return;
 
-    modalContent.innerHTML = `
+  const fallbackSrc = "https://via.placeholder.com/500x300?text=Sem+Imagem";
+
+  modalContent.innerHTML = `
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
       <!-- Image Showcase -->
       <div class="space-y-4">
         <div class="relative h-80 rounded-2xl overflow-hidden bg-black/60 border border-white/10">
-          <img src="${product.image}" alt="${product.title}" class="w-full h-full object-cover" />
+          <img 
+            src="${product.image}" 
+            onerror="this.onerror=null;this.src='${fallbackSrc}';"
+            alt="${product.title}" 
+            class="w-full h-full object-cover" 
+          />
           <span class="absolute top-4 left-4 text-xs font-semibold px-3 py-1 rounded-full badge-${product.badgeColor}">
             ${product.badge || product.categoryLabel}
           </span>
@@ -516,14 +606,14 @@ function openProductModal(productId) {
     </div>
   `;
 
-    modal.classList.remove('hidden');
-    document.body.style.overflow = 'hidden';
+  modal.classList.remove('hidden');
+  document.body.style.overflow = 'hidden';
 }
 
 function closeModal() {
-    const modal = document.getElementById('product-modal');
-    if (modal) modal.classList.add('hidden');
-    document.body.style.overflow = '';
+  const modal = document.getElementById('product-modal');
+  if (modal) modal.classList.add('hidden');
+  document.body.style.overflow = '';
 }
 
 /* ==========================================================================
@@ -531,102 +621,102 @@ function closeModal() {
    ========================================================================== */
 
 function showToast(message, type = 'success') {
-    let container = document.getElementById('toast-container');
-    if (!container) {
-        container = document.createElement('div');
-        container.id = 'toast-container';
-        document.body.appendChild(container);
-    }
+  let container = document.getElementById('toast-container');
+  if (!container) {
+    container = document.createElement('div');
+    container.id = 'toast-container';
+    document.body.appendChild(container);
+  }
 
-    const toast = document.createElement('div');
-    toast.className = `toast ${type === 'error' ? 'border-red-500' : ''}`;
+  const toast = document.createElement('div');
+  toast.className = `toast ${type === 'error' ? 'border-red-500' : ''}`;
 
-    const icon = type === 'error'
-        ? `<svg class="w-5 h-5 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>`
-        : `<svg class="w-5 h-5 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>`;
+  const icon = type === 'error'
+    ? `<svg class="w-5 h-5 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>`
+    : `<svg class="w-5 h-5 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>`;
 
-    toast.innerHTML = `
+  toast.innerHTML = `
     ${icon}
     <span class="text-sm font-semibold text-white">${message}</span>
   `;
 
-    container.appendChild(toast);
+  container.appendChild(toast);
 
-    setTimeout(() => {
-        toast.classList.add('toast-out');
-        toast.addEventListener('animationend', () => toast.remove());
-    }, 3500);
+  setTimeout(() => {
+    toast.classList.add('toast-out');
+    toast.addEventListener('animationend', () => toast.remove());
+  }, 3500);
 }
 
 function setupEventListeners() {
-    // Search input
-    const searchInput = document.getElementById('search-input');
-    if (searchInput) {
-        searchInput.addEventListener('input', (e) => {
-            state.searchQuery = e.target.value;
-            renderProducts();
-        });
-    }
-
-    // Sort selector
-    const sortSelect = document.getElementById('sort-select');
-    if (sortSelect) {
-        sortSelect.addEventListener('change', (e) => {
-            state.sortBy = e.target.value;
-            renderProducts();
-        });
-    }
-
-    // Rental Days selector in Cart
-    const daysSelect = document.getElementById('rental-days-select');
-    if (daysSelect) {
-        daysSelect.addEventListener('change', (e) => {
-            setRentalDays(e.target.value);
-        });
-    }
-
-    // Cart Drawer Toggles
-    const openCartBtn = document.getElementById('open-cart-btn');
-    const closeCartBtn = document.getElementById('close-cart-btn');
-    const cartBackdrop = document.getElementById('cart-backdrop');
-    const cartDrawer = document.getElementById('cart-drawer');
-
-    function openCart() {
-        if (cartDrawer && cartBackdrop) {
-            cartBackdrop.classList.remove('hidden');
-            cartDrawer.classList.remove('translate-x-full');
-            cartDrawer.classList.add('translate-x-0');
-            document.body.style.overflow = 'hidden';
-        }
-    }
-
-    function closeCart() {
-        if (cartDrawer && cartBackdrop) {
-            cartDrawer.classList.remove('translate-x-0');
-            cartDrawer.classList.add('translate-x-full');
-            cartBackdrop.classList.add('hidden');
-            document.body.style.overflow = '';
-        }
-    }
-
-    if (openCartBtn) openCartBtn.addEventListener('click', openCart);
-    if (closeCartBtn) closeCartBtn.addEventListener('click', closeCart);
-    if (cartBackdrop) cartBackdrop.addEventListener('click', closeCart);
-
-    // Close Modal Keydown ESC
-    document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape') {
-            closeModal();
-            closeCart();
-        }
+  // Search input
+  const searchInput = document.getElementById('search-input');
+  if (searchInput) {
+    searchInput.addEventListener('input', (e) => {
+      state.searchQuery = e.target.value;
+      renderProducts();
     });
+  }
 
-    // Mobile Menu Toggle
-    const mobileMenuBtn = document.getElementById('mobile-menu-btn');
-    const mobileNav = document.getElementById('mobile-nav');
-    if (mobileMenuBtn && mobileNav) {
-        mobileMenuBtn.addEventListener('click', () => {
-            mobileNav.classList.toggle('hidden');
-        });
+  // Sort selector
+  const sortSelect = document.getElementById('sort-select');
+  if (sortSelect) {
+    sortSelect.addEventListener('change', (e) => {
+      state.sortBy = e.target.value;
+      renderProducts();
+    });
+  }
+
+  // Rental Days selector in Cart
+  const daysSelect = document.getElementById('rental-days-select');
+  if (daysSelect) {
+    daysSelect.addEventListener('change', (e) => {
+      setRentalDays(e.target.value);
+    });
+  }
+
+  // Cart Drawer Toggles
+  const openCartBtn = document.getElementById('open-cart-btn');
+  const closeCartBtn = document.getElementById('close-cart-btn');
+  const cartBackdrop = document.getElementById('cart-backdrop');
+  const cartDrawer = document.getElementById('cart-drawer');
+
+  function openCart() {
+    if (cartDrawer && cartBackdrop) {
+      cartBackdrop.classList.remove('hidden');
+      cartDrawer.classList.remove('translate-x-full');
+      cartDrawer.classList.add('translate-x-0');
+      document.body.style.overflow = 'hidden';
     }
+  }
+
+  function closeCart() {
+    if (cartDrawer && cartBackdrop) {
+      cartDrawer.classList.remove('translate-x-0');
+      cartDrawer.classList.add('translate-x-full');
+      cartBackdrop.classList.add('hidden');
+      document.body.style.overflow = '';
+    }
+  }
+
+  if (openCartBtn) openCartBtn.addEventListener('click', openCart);
+  if (closeCartBtn) closeCartBtn.addEventListener('click', closeCart);
+  if (cartBackdrop) cartBackdrop.addEventListener('click', closeCart);
+
+  // Close Modal Keydown ESC
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      closeModal();
+      closeCart();
+    }
+  });
+
+  // Mobile Menu Toggle
+  const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+  const mobileNav = document.getElementById('mobile-nav');
+  if (mobileMenuBtn && mobileNav) {
+    mobileMenuBtn.addEventListener('click', () => {
+      mobileNav.classList.toggle('hidden');
+    });
+  }
 }
